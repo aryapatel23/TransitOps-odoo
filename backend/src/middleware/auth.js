@@ -27,6 +27,10 @@ const authorizeRoles = (...allowedRoles) => {
       return res.status(401).json({ error: 'Unauthorized: User not authenticated.' });
     }
 
+    if (req.user.role === 'ADMIN') {
+      return next();
+    }
+
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         error: `Forbidden: Role '${req.user.role}' is not authorized to perform this action.`
