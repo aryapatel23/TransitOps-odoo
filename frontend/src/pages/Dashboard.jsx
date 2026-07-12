@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Users, Navigation, Wrench, TrendingUp, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Truck, Users, Navigation, Wrench, TrendingUp, AlertTriangle, CheckCircle, RefreshCw, Lightbulb, ClipboardList } from 'lucide-react';
 import { api } from '../api';
 
 const KpiCard = ({ title, value, unit = '', sub, color = 'var(--accent-color)', icon: Icon }) => (
@@ -161,9 +161,9 @@ const Dashboard = ({ userRole }) => {
           width: '38px', height: '38px', borderRadius: '2px',
           backgroundColor: 'rgba(197,139,50,0.15)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--accent-color)', fontWeight: 'bold', fontSize: '18px'
+          color: 'var(--accent-color)'
         }}>
-          💡
+          <Lightbulb size={20} />
         </div>
         <div>
           <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-title)' }}>
@@ -174,6 +174,7 @@ const Dashboard = ({ userRole }) => {
             {userRole === 'DISPATCHER' && `Draft and dispatch trips. There are currently ${kpis.pendingTrips ?? 0} pending (draft) trips that need resources assigned.`}
             {userRole === 'SAFETY_OFFICER' && `Oversee driver safety. Review driver profiles – ${driverAvailability.suspended ?? 0} driver(s) are suspended. Make sure to monitor safety scores and expiring driving licenses.`}
             {userRole === 'FINANCIAL_ANALYST' && `Analyze expenses and fuel logging. Ensure all trip details are logged accurately to calculate vehicle ROI and operational costs.`}
+            {userRole === 'ADMIN' && `Full Administrator privileges. Monitor fleet health (${kpis.vehiclesInMaintenance ?? 0} in maintenance), ongoing dispatches (${kpis.activeTrips ?? 0} active trips), safety alerts (${driverAvailability.suspended ?? 0} suspended drivers), and financial metrics.`}
           </div>
         </div>
       </div>
@@ -260,8 +261,8 @@ const Dashboard = ({ userRole }) => {
       <div className="grid grid-cols-2" style={{ marginTop: '0' }}>
         {/* Maintenance attention */}
         <div className="card">
-          <h3 style={{ fontSize: '13px', fontWeight: '600', fontFamily: 'var(--font-title)', marginBottom: '12px' }}>
-            🔧 Open Maintenance
+          <h3 style={{ fontSize: '13px', fontWeight: '600', fontFamily: 'var(--font-title)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Wrench size={16} /> Open Maintenance
           </h3>
           {maintenanceAttention.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No open work orders. Fleet is healthy!</div>
@@ -291,8 +292,8 @@ const Dashboard = ({ userRole }) => {
 
         {/* Activity Log */}
         <div className="card">
-          <h3 style={{ fontSize: '13px', fontWeight: '600', fontFamily: 'var(--font-title)', marginBottom: '12px' }}>
-            📋 Recent Activity
+          <h3 style={{ fontSize: '13px', fontWeight: '600', fontFamily: 'var(--font-title)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <ClipboardList size={16} /> Recent Activity
           </h3>
           {recentOperationalActivity.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No recent activity.</div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw, Fuel, DollarSign, BarChart3, Navigation } from 'lucide-react';
 import { api } from '../api';
 
 const MetricCard = ({ label, value, sub, color = 'var(--accent-color)' }) => (
@@ -113,14 +113,14 @@ const Reports = () => {
         </button>
         <div style={{ flex: 1 }} />
         {[
-          ['fuel_efficiency', '⛽ Fuel CSV'],
-          ['operational_cost', '🔧 Cost CSV'],
-          ['vehicle_roi',      '📊 ROI CSV'],
-          ['trip_summary',     '🗺 Trips CSV'],
-        ].map(([type, label]) => (
-          <button key={type} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}
+          { type: 'fuel_efficiency', label: 'Fuel CSV', icon: Fuel },
+          { type: 'operational_cost', label: 'Cost CSV', icon: DollarSign },
+          { type: 'vehicle_roi', label: 'ROI CSV', icon: BarChart3 },
+          { type: 'trip_summary', label: 'Trips CSV', icon: Navigation },
+        ].map(({ type, label, icon: Icon }) => (
+          <button key={type} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
             onClick={() => api.exportCsv(type)}>
-            <Download size={12} /> {label}
+            <Icon size={12} /> {label}
           </button>
         ))}
       </div>

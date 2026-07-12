@@ -36,7 +36,7 @@ const Expenses = ({ userRole }) => {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  const canManage = userRole === 'FINANCIAL_ANALYST';
+  const canManage = userRole === 'FINANCIAL_ANALYST' || userRole === 'ADMIN';
 
   const [fuelForm, setFuelForm] = useState({
     vehicle_id: '', trip_id: '', fuel_quantity_liters: '', fuel_cost: '', odometer_reading: '', fuel_date: new Date().toISOString().slice(0, 10)

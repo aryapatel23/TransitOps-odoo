@@ -136,6 +136,8 @@ const Vehicles = ({ userRole }) => {
   const [editing, setEditing] = useState(null);
   const [selected, setSelected] = useState(null);
 
+  const canManage = userRole === 'FLEET_MANAGER' || userRole === 'ADMIN';
+
   const load = async () => {
     setLoading(true);
     try {
@@ -183,7 +185,7 @@ const Vehicles = ({ userRole }) => {
   return (
     <div>
       {/* Read-Only Alert for other roles */}
-      {userRole !== 'FLEET_MANAGER' && (
+      {!canManage && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: '10px',
           padding: '12px 16px', backgroundColor: 'rgba(197,139,50,0.08)',
@@ -210,7 +212,7 @@ const Vehicles = ({ userRole }) => {
           <option value="">All Statuses</option>
           {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
         </select>
-        {userRole === 'FLEET_MANAGER' && (
+        {canManage && (
           <button className="btn btn-primary" onClick={() => { setEditing(null); setShowModal(true); }}>
             <Plus size={14} /> Add Vehicle
           </button>
@@ -244,13 +246,13 @@ const Vehicles = ({ userRole }) => {
                   <th>Capacity</th>
                   <th>Odometer</th>
                   <th>Status</th>
-                  {userRole === 'FLEET_MANAGER' && <th>Actions</th>}
+                  {canManage && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {loading && <tr><td colSpan={userRole === 'FLEET_MANAGER' ? 8 : 7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</td></tr>}
+                {loading && <tr><td colSpan={canManage ? 8 : 7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</td></tr>}
                 {!loading && filtered.length === 0 && (
-                  <tr><td colSpan={userRole === 'FLEET_MANAGER' ? 8 : 7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No vehicles found.</td></tr>
+                  <tr><td colSpan={canManage ? 8 : 7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No vehicles found.</td></tr>
                 )}
                 {filtered.map(v => (
                   <tr
@@ -265,7 +267,7 @@ const Vehicles = ({ userRole }) => {
                     <td>{Number(v.maximum_load_capacity).toLocaleString()} kg</td>
                     <td>{Number(v.current_odometer || 0).toLocaleString()} km</td>
                     <td><span className={statusClass(v.status)}>{v.status?.replace('_', ' ')}</span></td>
-                    {userRole === 'FLEET_MANAGER' && (
+                    {canManage && (
                       <td>
                         <button
                           className="btn btn-secondary"
@@ -309,7 +311,7 @@ const Vehicles = ({ userRole }) => {
                 </React.Fragment>
               ))}
             </dl>
-            {userRole === 'FLEET_MANAGER' && (
+            {canManage && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                 <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => { setEditing(selected); setShowModal(true); }}>
                   <Edit2 size={12} /> Edit Vehicle

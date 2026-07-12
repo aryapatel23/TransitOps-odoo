@@ -8,6 +8,7 @@ const TEST_ACCOUNTS = [
   { name: 'rajan', email: 'rajan@transitops.com', role: 'Driver', color: '#319795' },
   { name: 'aray', email: 'aray@transitops.com', role: 'Safety Officer', color: '#2F855A' },
   { name: 'dax', email: 'dax@transitops.com', role: 'Financial Analyst', color: '#B7791F' },
+  { name: 'admin', email: 'admin@transitops.com', role: 'Admin', color: '#E53E3E' },
 ];
 
 const Login = ({ onLogin }) => {
