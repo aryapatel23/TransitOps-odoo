@@ -6,12 +6,13 @@ TransitOps is a centralized, production-grade enterprise transport operations re
 
 ## 📖 Table of Contents
 1. [Core Features](#-core-features)
-2. [Tech Stack](#-tech-stack)
-3. [Local Development Setup](#-local-development-setup)
-4. [Database Schema & Architecture](#-database-schema--architecture)
-5. [Smart Dispatch Recommendation Engine](#-smart-dispatch-recommendation-engine)
-6. [Cloud Deployment Guide (Production)](#-cloud-deployment-guide-production)
-7. [Repository File Structure](#-repository-file-structure)
+2. [Workflows & System Architecture](#-workflows--system-architecture)
+3. [Tech Stack](#-tech-stack)
+4. [Local Development Setup](#-local-development-setup)
+5. [Database Schema & Architecture](#-database-schema--architecture)
+6. [Smart Dispatch Recommendation Engine](#-smart-dispatch-recommendation-engine)
+7. [Cloud Deployment Guide (Production)](#-cloud-deployment-guide-production)
+8. [Repository File Structure](#-repository-file-structure)
 
 ---
 
@@ -26,6 +27,65 @@ TransitOps is a centralized, production-grade enterprise transport operations re
 *   **Transactional Trip Dispatch:** Uses PostgreSQL row-locking (`SELECT FOR UPDATE`) and database transactions (`BEGIN/COMMIT/ROLLBACK`) to enforce atomic dispatching and prevent race conditions or double-bookings of drivers and vehicles.
 *   **Maintenance Scheduler:** Tracks vehicle maintenance lifecycles, automatically transitioning vehicle statuses to `IN_SHOP` to exclude them from the dispatch pool.
 *   **Analytics & Exporter:** Compiles KPIs like Fuel Efficiency, Fleet Utilization, and Vehicle ROI, with full support for date-based filtering and CSV exporting.
+
+---
+
+## 📊 Workflows & System Architecture
+
+### 1. System Request & Authorization Architecture
+This diagram outlines how user roles request resources through the secure authorization middleware and transaction controllers:
+
+```mermaid
+graph TD
+    FM[Fleet Manager] -->|Manages Vehicles & Maintenance| API[REST API Gateways]
+    SO[Safety Officer] -->|Manages Drivers & Licensing| API
+    DP[Dispatcher] -->|Manages Trips & Dispatches| API
+    FA[Financial Analyst] -->|Manages Fuel & Expenses| API
+
+    subgraph Backend Server (Express on Render)
+        API --> Auth[JWT Auth Middleware]
+        Auth --> Valid[Strong Business Rule Validations]
+        Valid --> TX[Atomic Database Transaction Lock]
+    end
+
+    subgraph Database Cluster (Supabase Postgres)
+        TX --> DB[(PostgreSQL Database)]
+    end
+```
+
+### 2. Trip Dispatch & Lifecycle State Diagram
+Describes the strict state transitions and the automatic updates applied to vehicle/driver status at each step:
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT : Create Trip
+    
+    state "DRAFT" as DRAFT
+    state "DISPATCHED" as DISPATCHED
+    state "COMPLETED" as COMPLETED
+    state "CANCELLED" as CANCELLED
+
+    DRAFT --> DISPATCHED : Dispatch (Atomically Locks Driver & Vehicle to ON_TRIP)
+    DRAFT --> CANCELLED : Cancel (No status changes)
+
+    DISPATCHED --> COMPLETED : Complete (Update Odometer, Log Fuel, Restore Status to AVAILABLE)
+    DISPATCHED --> CANCELLED : Cancel (Restore Driver & Vehicle to AVAILABLE)
+
+    COMPLETED --> [*]
+    CANCELLED --> [*]
+```
+
+### 3. Vehicle Maintenance Lifecycle State Diagram
+Describes how work orders transition vehicles to `IN_SHOP` to exclude them from the dispatch pool, and how they return to `AVAILABLE` on completion:
+
+```mermaid
+stateDiagram-v2
+    [*] --> AVAILABLE
+    AVAILABLE --> IN_SHOP : Schedule Work Order (Auto transitions vehicle status)
+    IN_SHOP --> AVAILABLE : Complete Work Order (Vehicle status restored to AVAILABLE)
+    IN_SHOP --> RETIRED : Retire Vehicle (Vehicle taken permanently out of service)
+    RETIRED --> [*]
+```
 
 ---
 
