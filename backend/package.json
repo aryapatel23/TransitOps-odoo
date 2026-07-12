@@ -1,7 +1,7 @@
 {
   "name": "transitops-backend",
   "version": "1.0.0",
-  "description": "TransitOps ERP Backend API",
+  "description": "TransitOps Smart Transport Operations Platform Backend Services",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

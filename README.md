@@ -511,3 +511,33 @@ graph TD
 
 ### Phase 5: Expense, Fuel & Maintenance
 * Build secondary operational flows, calculations (Fuel efficiency, Fleet utilization percentages), and CSV data exporter services.
+
+---
+
+## 5. Repository File Structure & Git Status
+
+Below is the audit mapping of files tracked on GitHub vs. files excluded locally (untracked) to ensure codebase integrity and score rules:
+
+| Path | File / Folder | Git Status | Purpose / Description |
+|---|---|---|---|
+| `/` | `README.md` | **TRACKED** | Master specifications, architecture blueprint, and file structures. |
+| `/` | `.gitignore` | **TRACKED** | Root exclusions file to prevent code leakage. |
+| `/` | `TransitOps.zip` | **EXCLUDED** | Exported clean codebase zip for sharing. |
+| `backend/` | `package.json` | **TRACKED** | Node.js backend dependencies and project scripts. |
+| `backend/` | `package-lock.json` | **TRACKED** | Backend locked dependency tree. |
+| `backend/` | `server.js` | **EXCLUDED** | Express entry point file. |
+| `backend/` | `.env` | **EXCLUDED** | Private environment database and secret keys. |
+| `backend/` | `src/` | **EXCLUDED** | REST controller handlers, validation middlewares, routes, and pool configurations. |
+| `backend/` | `scripts/` | **EXCLUDED** | Database seeders and dummy data populations. |
+| `backend/` | `tests/` | **EXCLUDED** | Backend integration test suites. |
+| `frontend/` | `package.json` | **TRACKED** | React frontend dependencies and run commands. |
+| `frontend/` | `package-lock.json` | **TRACKED** | Frontend locked dependency tree. |
+| `frontend/` | `vite.config.js` | **TRACKED** | Vite compiler and dev server proxy settings. |
+| `frontend/` | `.gitignore` | **TRACKED** | Frontend project ignores. |
+| `frontend/` | `.oxlintrc.json` | **TRACKED** | Oxlint rules for styling and code checks. |
+| `frontend/` | `README.md` | **TRACKED** | Scaffolded client description. |
+| `frontend/` | `index.html` | **EXCLUDED** | Vite index HTML template. |
+| `frontend/` | `src/` | **EXCLUDED** | React page routes, Odoo styling system, context hooks, and API request functions. |
+| `frontend/` | `public/` | **EXCLUDED** | SVG icons and visual templates. |
+| `frontend/` | `dist/` | **EXCLUDED** | Compiled production bundle. |
+
