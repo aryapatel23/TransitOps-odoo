@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://transitops-odoo-gnbb.onrender.com/api');
 
 const getToken = () => localStorage.getItem('transitops_token');
 
