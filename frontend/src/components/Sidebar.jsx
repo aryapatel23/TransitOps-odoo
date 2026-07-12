@@ -24,7 +24,9 @@ const Sidebar = ({ activeTab, setActiveTab, userRole }) => {
   ];
 
   // Filter menu items by user role
-  const visibleItems = menuItems.filter(item => item.roles.includes(userRole) || userRole === 'ADMIN');
+  const visibleItems = menuItems.filter(item => 
+    item.roles.includes(userRole) || (userRole === 'ADMIN' && item.id !== 'driverTrips')
+  );
 
   return (
     <aside style={{

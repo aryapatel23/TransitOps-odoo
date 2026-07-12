@@ -91,7 +91,7 @@ function App() {
       case 'expenses': return <Expenses userRole={user.role} />;
       case 'reports': return <Reports userRole={user.role} />;
       case 'users': return <Users userRole={user.role} />;
-      case 'driverTrips': return <DriverPortal user={user} />;
+      case 'driverTrips': return user.role === 'DRIVER' ? <DriverPortal user={user} /> : <Dashboard userRole={user.role} />;
       default: return user.role === 'DRIVER' ? <DriverPortal user={user} /> : <Dashboard userRole={user.role} />;
     }
   };
