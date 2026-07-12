@@ -1,0 +1,302 @@
+import React, { useState, useEffect } from 'react';
+import { Plus, X } from 'lucide-react';
+import { api } from '../api';
+
+const Modal = ({ title, onClose, children }) => (
+  <div style={{
+    position: 'fixed', inset: 0, zIndex: 100,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center'
+  }}>
+    <div style={{
+      backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)',
+      borderRadius: '2px', width: '520px', maxHeight: '90vh', overflowY: 'auto'
+    }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '16px 20px', borderBottom: '1px solid var(--border-color)'
+      }}>
+        <h3 style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'var(--font-title)' }}>{title}</h3>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+          <X size={18} />
+        </button>
+      </div>
+      <div style={{ padding: '20px' }}>{children}</div>
+    </div>
+  </div>
+);
+
+const MAINTENANCE_TYPES = [
+  'Engine Overhaul',
+  'Brake Service',
+  'Tyre Rotation',
+  'Oil Change',
+  'AC Compressor',
+  'Electrical Fault',
+  'Suspension Repair',
+  'Clutch Replacement',
+  'Body Dent Repair',
+  'Inspection',
+  'Other'
+];
+
+const Maintenance = ({ userRole }) => {
+  const [records, setRecords] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [completing, setCompleting] = useState(null);
+
+  const canManage = userRole === 'FLEET_MANAGER';
+
+  const [form, setForm] = useState({
+    vehicle_id: '',
+    maintenance_type: 'Oil Change',
+    description: '',
+    start_date: new Date().toISOString().slice(0, 10),
+    maintenance_cost: ''
+  });
+  const [completeForm, setCompleteForm] = useState({
+    end_date: new Date().toISOString().slice(0, 10),
+    maintenance_cost: ''
+  });
+  const [formError, setFormError] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const setComp = (k, v) => setCompleteForm(f => ({ ...f, [k]: v }));
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [mRes, vRes] = await Promise.all([api.getMaintenance(), api.getVehicles()]);
+      setRecords(mRes.maintenance || mRes);
+      setVehicles(vRes.vehicles || vRes);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setFormError('');
+    setFormLoading(true);
+    try {
+      await api.createMaintenance({
+        vehicle_id: Number(form.vehicle_id),
+        maintenance_type: form.maintenance_type,
+        description: form.description,
+        start_date: form.start_date,
+        maintenance_cost: form.maintenance_cost ? Number(form.maintenance_cost) : 0.0,
+      });
+      setShowCreate(false);
+      setForm({
+        vehicle_id: '',
+        maintenance_type: 'Oil Change',
+        description: '',
+        start_date: new Date().toISOString().slice(0, 10),
+        maintenance_cost: ''
+      });
+      await load();
+    } catch (e) {
+      setFormError(e.message);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleComplete = async (e) => {
+    e.preventDefault();
+    setFormError('');
+    setFormLoading(true);
+    try {
+      await api.completeMaintenance(completing.id, {
+        end_date: completeForm.end_date,
+        maintenance_cost: completeForm.maintenance_cost ? Number(completeForm.maintenance_cost) : undefined,
+      });
+      setCompleting(null);
+      setCompleteForm({
+        end_date: new Date().toISOString().slice(0, 10),
+        maintenance_cost: ''
+      });
+      await load();
+    } catch (e) {
+      setFormError(e.message);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const openCount = records.filter(r => r.status === 'ACTIVE').length;
+  const closedCount = records.filter(r => r.status === 'COMPLETED').length;
+
+  return (
+    <div>
+      {/* Stats Strip */}
+      <div className="grid grid-cols-3" style={{ marginBottom: '16px' }}>
+        <div className="card" style={{ padding: '12px 14px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Total Records</div>
+          <div style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'var(--font-title)' }}>{records.length}</div>
+        </div>
+        <div className="card" style={{ padding: '12px 14px' }}>
+          <div style={{ fontSize: '11px', color: '#ED8936', textTransform: 'uppercase', marginBottom: '4px' }}>Active (In Shop)</div>
+          <div style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'var(--font-title)', color: '#ED8936' }}>{openCount}</div>
+        </div>
+        <div className="card" style={{ padding: '12px 14px' }}>
+          <div style={{ fontSize: '11px', color: '#48BB78', textTransform: 'uppercase', marginBottom: '4px' }}>Completed</div>
+          <div style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'var(--font-title)', color: '#48BB78' }}>{closedCount}</div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+        {canManage && (
+          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
+            <Plus size={14} /> Log Maintenance
+          </button>
+        )}
+      </div>
+
+      {error && <div style={{ color: '#F56565', marginBottom: '8px' }}>{error}</div>}
+
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Work Order</th>
+              <th>Vehicle</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Cost (₹)</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              {canManage && <th>Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={canManage ? 9 : 8} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</td></tr>}
+            {!loading && records.length === 0 && (
+              <tr><td colSpan={canManage ? 9 : 8} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No maintenance records found.</td></tr>
+            )}
+            {records.map(r => {
+              const isOpen = r.status === 'ACTIVE';
+              return (
+                <tr key={r.id}>
+                  <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>#WO-{r.id}</td>
+                  <td style={{ fontWeight: '500' }}>{r.vehicle_reg || `ID: ${r.vehicle_id}`}</td>
+                  <td>{r.maintenance_type}</td>
+                  <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{r.description || '—'}</td>
+                  <td style={{ fontWeight: '600' }}>₹{Number(r.maintenance_cost).toLocaleString()}</td>
+                  <td style={{ fontSize: '12px' }}>{r.start_date ? new Date(r.start_date).toLocaleDateString() : '—'}</td>
+                  <td style={{ fontSize: '12px' }}>{r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}</td>
+                  <td>
+                    <span className={isOpen ? 'badge badge-inshop' : 'badge badge-completed'}>
+                      {isOpen ? 'In Shop' : 'Completed'}
+                    </span>
+                  </td>
+                  {canManage && (
+                    <td>
+                      {isOpen && (
+                        <button
+                          className="btn btn-accent"
+                          style={{ padding: '4px 8px', fontSize: '11px' }}
+                          onClick={() => {
+                            setCompleting(r);
+                            setCompleteForm(c => ({ ...c, maintenance_cost: r.maintenance_cost }));
+                            setFormError('');
+                          }}
+                        >
+                          Complete
+                        </button>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Create Modal */}
+      {showCreate && (
+        <Modal title="Log New Maintenance" onClose={() => setShowCreate(false)}>
+          <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label>Vehicle *</label>
+              <select value={form.vehicle_id} onChange={e => set('vehicle_id', e.target.value)} required>
+                <option value="">Select Vehicle</option>
+                {vehicles.filter(v => v.status === 'AVAILABLE').map(v => (
+                  <option key={v.id} value={v.id}>{v.registration_number} – {v.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2">
+              <div>
+                <label>Maintenance Type *</label>
+                <select value={form.maintenance_type} onChange={e => set('maintenance_type', e.target.value)}>
+                  {MAINTENANCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label>Start Date *</label>
+                <input type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} required />
+              </div>
+            </div>
+            <div>
+              <label>Description</label>
+              <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={2} />
+            </div>
+            <div>
+              <label>Estimated Cost (₹)</label>
+              <input type="number" value={form.maintenance_cost} onChange={e => set('maintenance_cost', e.target.value)} min={0} step={0.01} />
+            </div>
+            {formError && <div style={{ color: '#F56565', fontSize: '13px' }}>{formError}</div>}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={formLoading}>
+                {formLoading ? 'Saving...' : 'Create Record'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Complete Maintenance Modal */}
+      {completing && (
+        <Modal title={`Close Maintenance Order #WO-${completing.id}`} onClose={() => setCompleting(null)}>
+          <form onSubmit={handleComplete} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+              Type: <strong style={{ color: 'var(--text-main)' }}>{completing.maintenance_type}</strong>
+            </div>
+            <div className="grid grid-cols-2">
+              <div>
+                <label>End Date *</label>
+                <input type="date" value={completeForm.end_date} onChange={e => setComp('end_date', e.target.value)} required />
+              </div>
+              <div>
+                <label>Final Cost (₹) *</label>
+                <input type="number" value={completeForm.maintenance_cost} onChange={e => setComp('maintenance_cost', e.target.value)} min={0} step={0.01} required />
+              </div>
+            </div>
+            {formError && <div style={{ color: '#F56565', fontSize: '13px' }}>{formError}</div>}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setCompleting(null)}>Cancel</button>
+              <button type="submit" className="btn btn-accent" disabled={formLoading}>
+                {formLoading ? 'Closing...' : '✓ Mark as Completed'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+export default Maintenance;
