@@ -1,18 +1,21 @@
-# Exclude all code directories
-backend/src/
-backend/tests/
-backend/scripts/
-backend/.env
-backend/server.js
-frontend/src/
-frontend/public/
-frontend/dist/
-frontend/index.html
-
-# General ignores
+# Dependencies
+node_modules/
 **/node_modules/
+
+# Local env files
+.env
+*.env
+
+# Builds
+dist/
+build/
+frontend/dist/
+
+# System and logs
+*.log
+.gemini/
+.DS_Store
+
+# Archives
 *.zip
 *.tar.gz
-*.log
-.env
-.gemini/

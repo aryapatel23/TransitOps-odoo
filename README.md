@@ -537,7 +537,11 @@ Below is the audit mapping of files tracked on GitHub vs. files excluded locally
 | `frontend/` | `.oxlintrc.json` | **TRACKED** | Oxlint rules for styling and code checks. |
 | `frontend/` | `README.md` | **TRACKED** | Scaffolded client description. |
 | `frontend/` | `index.html` | **EXCLUDED** | Vite index HTML template. |
-| `frontend/` | `src/` | **EXCLUDED** | React page routes, Odoo styling system, context hooks, and API request functions. |
+| `frontend/` | `src/pages/Dashboard.jsx` | **TRACKED** | React frontend Dashboard page (statistics & KPIs). |
+| `frontend/` | `src/pages/Drivers.jsx` | **TRACKED** | React frontend Driver Registry page. |
+| `frontend/` | `src/pages/Vehicles.jsx` | **TRACKED** | React frontend Vehicle Registry page. |
+| `frontend/` | `src/` | **EXCLUDED** | Other React pages, UI components, styling sheets, and api.js (excluding the 3 tracked pages). |
 | `frontend/` | `public/` | **EXCLUDED** | SVG icons and visual templates. |
 | `frontend/` | `dist/` | **EXCLUDED** | Compiled production bundle. |
+
 
