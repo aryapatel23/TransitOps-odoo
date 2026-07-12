@@ -1,0 +1,9 @@
+backend/
+frontend/
+*.zip
+*.tar.gz
+*.log
+.env
+node_modules/
+dist/
+.gemini/
