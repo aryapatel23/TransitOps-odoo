@@ -1,9 +1,18 @@
-backend/
-frontend/
+# Exclude all code directories
+backend/src/
+backend/tests/
+backend/scripts/
+backend/.env
+backend/server.js
+frontend/src/
+frontend/public/
+frontend/dist/
+frontend/index.html
+
+# General ignores
+**/node_modules/
 *.zip
 *.tar.gz
 *.log
 .env
-node_modules/
-dist/
 .gemini/
