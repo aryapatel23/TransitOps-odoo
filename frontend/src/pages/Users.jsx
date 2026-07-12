@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, X, Trash2 } from 'lucide-react';
 import { api } from '../api';
 
-const ROLES = ['FLEET_MANAGER', 'DISPATCHER', 'DRIVER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST'];
+const ROLES = ['FLEET_MANAGER', 'DISPATCHER', 'DRIVER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST', 'ADMIN'];
 
 const ROLE_COLORS = {
   FLEET_MANAGER: '#714B67',
@@ -10,6 +10,7 @@ const ROLE_COLORS = {
   DRIVER: '#319795',
   SAFETY_OFFICER: '#2F855A',
   FINANCIAL_ANALYST: '#B7791F',
+  ADMIN: '#E53E3E',
 };
 
 const Modal = ({ title, onClose, children }) => (

@@ -4,6 +4,19 @@ const { authenticateJWT, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Helper to get average fuel price dynamically from existing logs
+const getDynamicFuelPrice = async (clientOrPool) => {
+  try {
+    const res = await clientOrPool.query('SELECT SUM(fuel_cost) / SUM(fuel_quantity_liters) as avg_price FROM fuel_logs');
+    if (res.rows[0] && res.rows[0].avg_price) {
+      return parseFloat(parseFloat(res.rows[0].avg_price).toFixed(2));
+    }
+  } catch (e) {
+    console.error('Error fetching dynamic fuel price:', e);
+  }
+  return 95.00; // fallback default
+};
+
 // GET /api/trips - List trips with status filtering
 router.get('/', authenticateJWT, async (req, res, next) => {
   const { status, vehicle_id, driver_id } = req.query;
@@ -110,6 +123,33 @@ router.post('/', authenticateJWT, authorizeRoles('DISPATCHER', 'FLEET_MANAGER'),
   }
 
   try {
+    // Validate vehicle and driver suitability
+    const vehicleRes = await query('SELECT * FROM vehicles WHERE id = $1', [vehicle_id]);
+    if (vehicleRes.rows.length === 0) {
+      return res.status(400).json({ error: 'Vehicle does not exist.' });
+    }
+    const vehicle = vehicleRes.rows[0];
+
+    const driverRes = await query('SELECT * FROM drivers WHERE id = $1', [driver_id]);
+    if (driverRes.rows.length === 0) {
+      return res.status(400).json({ error: 'Driver does not exist.' });
+    }
+    const driver = driverRes.rows[0];
+
+    if (parseFloat(cargo_weight) > parseFloat(vehicle.maximum_load_capacity)) {
+      return res.status(400).json({ error: `Cargo weight exceeds the vehicle's maximum load capacity.` });
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const expiryStr = new Date(driver.license_expiry_date).toISOString().split('T')[0];
+    if (expiryStr < todayStr) {
+      return res.status(400).json({ error: 'Driver license has expired.' });
+    }
+
+    if (driver.status === 'SUSPENDED') {
+      return res.status(400).json({ error: 'Driver is suspended.' });
+    }
+
     // Generate a unique trip code (e.g., TRP-<timestamp or random sequence>)
     const tripCountRes = await query('SELECT count(*) FROM trips');
     const tripNum = parseInt(tripCountRes.rows[0].count) + 101;
@@ -306,7 +346,7 @@ router.post('/:id/complete', authenticateJWT, authorizeRoles('DISPATCHER', 'FLEE
     );
 
     // 4. Create linked fuel log automatically
-    const fuelCostPerLiter = 95.00; // Mock rate for automatic costs
+    const fuelCostPerLiter = await getDynamicFuelPrice(client);
     const totalFuelCost = parseFloat(fuel_consumed) * fuelCostPerLiter;
     await client.query(
       `INSERT INTO fuel_logs (vehicle_id, trip_id, fuel_quantity_liters, fuel_cost, fuel_date, odometer_reading)
@@ -388,8 +428,17 @@ router.post('/recommend-resources', authenticateJWT, authorizeRoles('DISPATCHER'
     const weight = parseFloat(cargo_weight);
     const distance = parseFloat(planned_distance);
 
-    // 1. Fetch available vehicles
-    const vehiclesRes = await query('SELECT * FROM vehicles WHERE status = \'AVAILABLE\'');
+    // Get dynamic fuel price
+    const fuelCostPerLiter = await getDynamicFuelPrice(pool);
+
+    // 1. Fetch available vehicles (excluding those already assigned to DRAFT or DISPATCHED trips)
+    const vehiclesRes = await query(`
+      SELECT * FROM vehicles 
+      WHERE status = 'AVAILABLE'
+        AND id NOT IN (
+          SELECT DISTINCT vehicle_id FROM trips WHERE status IN ('DRAFT', 'DISPATCHED') AND vehicle_id IS NOT NULL
+        )
+    `);
     const availableVehicles = vehiclesRes.rows;
 
     // Filter vehicles that can handle the cargo weight
@@ -410,15 +459,35 @@ router.post('/recommend-resources', authenticateJWT, authorizeRoles('DISPATCHER'
       if (distSum > 0 && fuelSum > 0) {
         efficiency = distSum / fuelSum;
       } else {
-        // Fallback defaults based on type
-        if (vehicle.type.toLowerCase() === 'van') efficiency = 12.0;
-        else if (vehicle.type.toLowerCase() === 'truck') efficiency = 6.0;
-        else if (vehicle.type.toLowerCase() === 'flatbed') efficiency = 4.5;
+        // Dynamic fallback based on average efficiency of the SAME vehicle type from other completed trips
+        try {
+          const typeAvgRes = await query(
+            `SELECT SUM(t.planned_distance) as dist, SUM(t.fuel_consumed) as fuel 
+             FROM trips t 
+             JOIN vehicles v ON t.vehicle_id = v.id 
+             WHERE v.type = $1 AND t.status = 'COMPLETED'`,
+            [vehicle.type]
+          );
+          const typeDist = parseFloat(typeAvgRes.rows[0].dist) || 0;
+          const typeFuel = parseFloat(typeAvgRes.rows[0].fuel) || 0;
+          if (typeDist > 0 && typeFuel > 0) {
+            efficiency = typeDist / typeFuel;
+          } else {
+            // Fallback defaults based on type
+            if (vehicle.type.toLowerCase() === 'van') efficiency = 12.0;
+            else if (vehicle.type.toLowerCase() === 'truck') efficiency = 6.0;
+            else if (vehicle.type.toLowerCase() === 'flatbed') efficiency = 4.5;
+          }
+        } catch (e) {
+          if (vehicle.type.toLowerCase() === 'van') efficiency = 12.0;
+          else if (vehicle.type.toLowerCase() === 'truck') efficiency = 6.0;
+          else if (vehicle.type.toLowerCase() === 'flatbed') efficiency = 4.5;
+        }
       }
 
       const capacityDiff = parseFloat(vehicle.maximum_load_capacity) - weight;
       const estimatedFuelRequired = distance / efficiency;
-      const estimatedFuelCost = estimatedFuelRequired * 95.00; // Mock rate
+      const estimatedFuelCost = estimatedFuelRequired * fuelCostPerLiter;
 
       vehicleRecommendations.push({
         ...vehicle,
@@ -434,15 +503,16 @@ router.post('/recommend-resources', authenticateJWT, authorizeRoles('DISPATCHER'
     // Sort vehicles: lowest score first (best balance of capacity fit & fuel economy)
     vehicleRecommendations.sort((a, b) => a.score - b.score);
 
-    // 2. Fetch available drivers with valid licenses
-    const driversRes = await query('SELECT * FROM drivers WHERE status = \'AVAILABLE\'');
-    const availableDrivers = driversRes.rows;
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const eligibleDrivers = availableDrivers.filter(d => {
-      const expiryStr = new Date(d.license_expiry_date).toISOString().split('T')[0];
-      return expiryStr >= todayStr;
-    });
+    // 2. Fetch available drivers with valid licenses (filtered natively in SQL to avoid timezone/formatting bugs)
+    const driversRes = await query(`
+      SELECT * FROM drivers 
+      WHERE status = 'AVAILABLE' 
+        AND license_expiry_date >= CURRENT_DATE
+        AND id NOT IN (
+          SELECT DISTINCT driver_id FROM trips WHERE status IN ('DRAFT', 'DISPATCHED') AND driver_id IS NOT NULL
+        )
+    `);
+    const eligibleDrivers = driversRes.rows;
 
     // Rank drivers: prefer highest safety score first
     const driverRecommendations = eligibleDrivers.map(d => ({

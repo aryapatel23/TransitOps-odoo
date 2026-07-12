@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, MapPin, CheckCircle, X, AlertTriangle, RefreshCw, Navigation } from 'lucide-react';
+import { Truck, MapPin, CheckCircle, X, AlertTriangle, RefreshCw, Navigation, Check } from 'lucide-react';
 import { api } from '../api';
 
 const STATUS_COLORS = {
@@ -154,7 +154,11 @@ const CompleteModal = ({ trip, onClose, onSuccess }) => {
         )}
         <div style={{ display: 'flex', gap: '10px' }}>
           <button type="submit" disabled={loading} style={{ flex: 1, padding: '10px', backgroundColor: '#2F855A', color: '#fff', border: 'none', borderRadius: '6px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: '600', fontFamily: 'var(--font-family)', opacity: loading ? 0.7 : 1 }}>
-            {loading ? 'Submitting...' : '✓ Mark Trip Completed'}
+            {loading ? 'Submitting...' : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Check size={14} /> Mark Trip Completed
+              </span>
+            )}
           </button>
           <button type="button" onClick={onClose} style={{ padding: '10px 16px', backgroundColor: 'transparent', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-family)' }}>
             Cancel
@@ -201,7 +205,7 @@ const DriverPortal = ({ user }) => {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-title)' }}>
-            Welcome, {user?.name} 👋
+            Welcome, {user?.name}
           </div>
           <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
             Your assigned trips are shown below. Submit fuel & odometer data after completing a trip.

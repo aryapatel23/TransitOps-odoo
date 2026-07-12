@@ -26,6 +26,7 @@ describe('TransitOps E2E Backend & Integration Tests', () => {
       { email: 'dispatcher@transitops.com', key: 'dispatcher' },
       { email: 'safety@transitops.com', key: 'safety' },
       { email: 'analyst@transitops.com', key: 'analyst' },
+      { email: 'admin@transitops.com', key: 'admin' },
     ];
 
     for (const r of roles) {
@@ -74,6 +75,27 @@ describe('TransitOps E2E Backend & Integration Tests', () => {
         .put('/api/drivers/1/suspend')
         .set('Authorization', `Bearer ${tokens.manager}`);
       expect(res.status).toBe(403);
+    });
+ 
+    it('should permit admin user to create fuel logs and suspend drivers (RBAC Bypass)', async () => {
+      // 1. Admin should be able to create fuel log (normally restricted to FINANCIAL_ANALYST)
+      const resFuel = await request(app)
+        .post('/api/expenses/fuel')
+        .set('Authorization', `Bearer ${tokens.admin}`)
+        .send({ vehicle_id: 1, fuel_quantity_liters: 10, fuel_cost: 950, fuel_date: '2026-07-12', odometer_reading: 10100 });
+      expect(resFuel.status).toBe(201);
+
+      // 2. Admin should be able to suspend driver (normally restricted to SAFETY_OFFICER or FLEET_MANAGER)
+      const resSuspend = await request(app)
+        .put('/api/drivers/1/suspend')
+        .set('Authorization', `Bearer ${tokens.admin}`);
+      expect(resSuspend.status).toBe(200);
+
+      // Restore driver status so other tests can use it
+      const resUnsuspend = await request(app)
+        .put('/api/drivers/1/unsuspend')
+        .set('Authorization', `Bearer ${tokens.admin}`);
+      expect(resUnsuspend.status).toBe(200);
     });
   });
 

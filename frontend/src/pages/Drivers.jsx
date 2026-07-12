@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, X, Edit2, ShieldAlert, ShieldOff, Shield } from 'lucide-react';
+import { Plus, Search, X, Edit2, ShieldAlert, ShieldOff, Shield, Check } from 'lucide-react';
 import { api } from '../api';
 
 const licenseClass = (status) => {
@@ -140,8 +140,9 @@ const Drivers = ({ userRole }) => {
   const [selected, setSelected] = useState(null);
   const [scoreEdit, setScoreEdit] = useState({ show: false, id: null, score: 100 });
 
-  const isFleetManager = userRole === 'FLEET_MANAGER';
-  const isSafetyOfficer = userRole === 'SAFETY_OFFICER';
+  const isAdmin = userRole === 'ADMIN';
+  const isFleetManager = userRole === 'FLEET_MANAGER' || isAdmin;
+  const isSafetyOfficer = userRole === 'SAFETY_OFFICER' || isAdmin;
   const canAddOrDelete = isFleetManager;
   const canEditDetails = isFleetManager || isSafetyOfficer;
   const canScoreOrSuspend = isSafetyOfficer || isFleetManager;
@@ -389,7 +390,15 @@ const Drivers = ({ userRole }) => {
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => handleSuspend(selected)}
                 >
-                  {selected.status === 'SUSPENDED' ? '✓ Unsuspend Driver' : '⚠ Suspend Driver'}
+                  {selected.status === 'SUSPENDED' ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Check size={12} /> Unsuspend Driver
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <ShieldAlert size={12} /> Suspend Driver
+                    </span>
+                  )}
                 </button>
               )}
               {canScoreOrSuspend && (

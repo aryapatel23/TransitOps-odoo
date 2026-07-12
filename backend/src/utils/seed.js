@@ -29,7 +29,7 @@ const seedDatabase = async () => {
 
     // 2. Create Enums and Types
     await client.query(`
-      CREATE TYPE user_role AS ENUM ('FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST', 'DRIVER');
+      CREATE TYPE user_role AS ENUM ('FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST', 'DRIVER', 'ADMIN');
       CREATE TYPE user_status AS ENUM ('ACTIVE', 'INACTIVE');
       CREATE TYPE vehicle_status AS ENUM ('AVAILABLE', 'ON_TRIP', 'IN_SHOP', 'RETIRED');
       CREATE TYPE driver_status AS ENUM ('AVAILABLE', 'ON_TRIP', 'OFF_DUTY', 'SUSPENDED');
@@ -196,7 +196,8 @@ const seedDatabase = async () => {
       ('Bob Dispatcher', 'dispatcher@transitops.com', $1, 'DISPATCHER',        'ACTIVE', NULL),
       ('Alex Driver',    'driver@transitops.com',     $1, 'DRIVER',            'ACTIVE', $2),
       ('Charlie Safety', 'safety@transitops.com',     $1, 'SAFETY_OFFICER',    'ACTIVE', NULL),
-      ('David Analyst',  'analyst@transitops.com',    $1, 'FINANCIAL_ANALYST', 'ACTIVE', NULL);
+      ('David Analyst',  'analyst@transitops.com',    $1, 'FINANCIAL_ANALYST', 'ACTIVE', NULL),
+      ('Admin User',     'admin@transitops.com',      $1, 'ADMIN',             'ACTIVE', NULL);
     `, [commonPasswordHash, alexDriver.id]);
 
     await client.query('COMMIT');

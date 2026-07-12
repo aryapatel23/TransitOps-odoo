@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Check } from 'lucide-react';
 import { api } from '../api';
 
 const Modal = ({ title, onClose, children }) => (
@@ -48,7 +48,7 @@ const Maintenance = ({ userRole }) => {
   const [showCreate, setShowCreate] = useState(false);
   const [completing, setCompleting] = useState(null);
 
-  const canManage = ['FLEET_MANAGER', 'DISPATCHER'].includes(userRole);
+  const canManage = ['FLEET_MANAGER', 'DISPATCHER', 'ADMIN'].includes(userRole);
 
   const [form, setForm] = useState({
     vehicle_id: '',
@@ -301,7 +301,11 @@ const Maintenance = ({ userRole }) => {
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button type="button" className="btn btn-secondary" onClick={() => setCompleting(null)}>Cancel</button>
               <button type="submit" className="btn btn-accent" disabled={formLoading}>
-                {formLoading ? 'Closing...' : '✓ Mark as Completed'}
+                {formLoading ? 'Closing...' : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <Check size={14} /> Mark as Completed
+                  </span>
+                )}
               </button>
             </div>
           </form>

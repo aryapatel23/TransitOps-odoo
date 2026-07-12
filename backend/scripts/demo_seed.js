@@ -36,7 +36,7 @@ const run = async () => {
     // STEP 2: Enums
     // ──────────────────────────────────────────────
     await client.query(`
-      CREATE TYPE user_role       AS ENUM ('FLEET_MANAGER','DISPATCHER','DRIVER','SAFETY_OFFICER','FINANCIAL_ANALYST');
+      CREATE TYPE user_role       AS ENUM ('FLEET_MANAGER','DISPATCHER','DRIVER','SAFETY_OFFICER','FINANCIAL_ANALYST','ADMIN');
       CREATE TYPE user_status     AS ENUM ('ACTIVE','INACTIVE');
       CREATE TYPE vehicle_status  AS ENUM ('AVAILABLE','ON_TRIP','IN_SHOP','RETIRED');
       CREATE TYPE driver_status   AS ENUM ('AVAILABLE','ON_TRIP','OFF_DUTY','SUSPENDED');
@@ -169,9 +169,10 @@ const run = async () => {
       ('kalp',    'kalp@transitops.com',    $1, 'FLEET_MANAGER',    NULL),
       ('kalpan',  'kalpan@transitops.com',  $1, 'DISPATCHER',        NULL),
       ('aray',    'aray@transitops.com',    $1, 'SAFETY_OFFICER',    NULL),
-      ('dax',     'dax@transitops.com',     $1, 'FINANCIAL_ANALYST', NULL)
+      ('dax',     'dax@transitops.com',     $1, 'FINANCIAL_ANALYST', NULL),
+      ('admin',   'admin@transitops.com',   $1, 'ADMIN',             NULL)
     `, [pwHash]);
-    console.log('✅ 4 custom users seeded (DRIVER user will be added after drivers).');
+    console.log('✅ 5 custom users seeded (DRIVER user will be added after drivers).');
 
     // ──────────────────────────────────────────────
     // STEP 5: Seed Vehicles (12 vehicles)

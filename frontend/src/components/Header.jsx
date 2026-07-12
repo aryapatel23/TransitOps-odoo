@@ -7,6 +7,7 @@ const ROLE_DISPLAY = {
   DRIVER: { label: 'Driver', color: '#319795' },
   SAFETY_OFFICER: { label: 'Safety Officer', color: '#2F855A' },
   FINANCIAL_ANALYST: { label: 'Financial Analyst', color: '#B7791F' },
+  ADMIN: { label: 'Admin', color: '#E53E3E' },
 };
 
 const Header = ({ user, currentPage, onLogout }) => {
